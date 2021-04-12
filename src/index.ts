@@ -9,6 +9,7 @@ import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
 import { redis } from "./redis";
 import { graphqlUploadExpress } from "graphql-upload";
+import queryComplexity, { simpleEstimator, fieldExtensionsEstimator } from "graphql-query-complexity";
 
 const main = async () => {
   await createConnection();
@@ -21,7 +22,20 @@ const main = async () => {
   const apolloServer = new ApolloServer({
     schema,
     context: ({ req, res }) => ({ req, res }),
-    uploads: false
+    uploads: false,
+    validationRules: [
+      queryComplexity({
+        maximumComplexity: 8,
+        variables: {},
+        onComplete: (complexity: number) => console.log("Query Complexity:", complexity),
+        estimators: [
+          fieldExtensionsEstimator(),
+          simpleEstimator({
+            defaultComplexity: 1
+          })
+        ]
+      })
+    ]
   });
   const app = Express();
 

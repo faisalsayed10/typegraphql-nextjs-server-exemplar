@@ -8,6 +8,7 @@ import "reflect-metadata";
 import { buildSchema } from "type-graphql";
 import { createConnection } from "typeorm";
 import { redis } from "./redis";
+import { graphqlUploadExpress } from "graphql-upload";
 
 const main = async () => {
   await createConnection();
@@ -20,6 +21,7 @@ const main = async () => {
   const apolloServer = new ApolloServer({
     schema,
     context: ({ req, res }) => ({ req, res }),
+    uploads: false
   });
   const app = Express();
 
@@ -31,6 +33,8 @@ const main = async () => {
       origin: "http://localhost:3000",
     })
   );
+
+  app.use(graphqlUploadExpress({ maxFileSize: 10000000, maxFiles: 10 }));
 
   app.use(
     session({
